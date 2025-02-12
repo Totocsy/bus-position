@@ -166,30 +166,6 @@
                 `;
             }
 
-            // Send updated bus position to the server
-            async updateBusPositionOnServer(busNumber, position) {
-                try {
-                    const response = await fetch('/updateBusPosition', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            busNumber,
-                            latitude: position.latitude,
-                            longitude: position.longitude,
-                            timestamp: position.timestamp
-                        })
-                    });
-                    if (response.ok) {
-                        console.log(`Bus ${busNumber} position updated on server`);
-                    } else {
-                        console.log(`Failed to update bus ${busNumber} position on server`);
-                    }
-                } catch (error) {
-                    console.error('Error sending bus position to server:', error);
-                }
-            }
 
             // Create a JSON representation of bus movement data
             createMovementJSON() {
