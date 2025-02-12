@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bus Tracking Server</title>
     <style>
         body {
@@ -99,134 +101,60 @@
     </div>
 
     <script>
-        // Busz útvonalak és pozíciók kezelése
-        class BusTracker {
-            constructor() {
-                this.buses = new Map();
-                this.routes = new Map();
-                this.currentIndexes = new Map();
+        // Simulate the server-side bus positions
+        const busPositions = {
+            "21": {
+                latitude: 45.123456,
+                longitude: 25.123456,
+                timestamp: new Date().toISOString()
+            },
+            "23": {
+                latitude: 45.223456,
+                longitude: 25.223456,
+                timestamp: new Date().toISOString()
+            },
+            "43": {
+                latitude: 45.323456,
+                longitude: 25.323456,
+                timestamp: new Date().toISOString()
             }
+        };
 
-            async loadRoute(busNumber) {
-                try {
-                    const response = await fetch(`./routes/routes_${busNumber}.json`);
-                    const data = await response.json();
-                    this.routes.set(busNumber, data.busRoute);
-                    this.currentIndexes.set(busNumber, 0);
-                    this.startBusMovement(busNumber);
-                    return true;
-                } catch (error) {
-                    console.error(`Error loading route for bus ${busNumber}:`, error);
-                    return false;
-                }
-            }
-
-            startBusMovement(busNumber) {
-                setInterval(() => {
-                    const route = this.routes.get(busNumber);
-                    let currentIndex = this.currentIndexes.get(busNumber);
-
-                    if (currentIndex >= route.length - 1) {
-                        currentIndex = 0;
-                    }
-
-                    const position = {
-                        latitude: route[currentIndex][0],
-                        longitude: route[currentIndex][1],
-                        timestamp: new Date().toISOString()
-                    };
-
-                    this.buses.set(busNumber, position);
-                    this.currentIndexes.set(busNumber, currentIndex + 1);
-                    this.updateBusDisplay(busNumber, position);
-
-                    // Send updated position to the server
-                    this.updateBusPositionOnServer(busNumber, position);
-                }, 2000);
-            }
-
-            updateBusDisplay(busNumber, position) {
-                let busElement = document.getElementById(`bus-${busNumber}`);
-                if (!busElement) {
-                    busElement = document.createElement('div');
-                    busElement.id = `bus-${busNumber}`;
-                    busElement.className = 'bus-info';
-                    document.getElementById('busContainer').appendChild(busElement);
-                }
-
-                busElement.innerHTML = `
-                    <h3>Bus ${busNumber}</h3>
-                    <div class="coordinates">
-                        Latitude: ${position.latitude.toFixed(6)}<br>
-                        Longitude: ${position.longitude.toFixed(6)}
-                    </div>
-                    <div class="timestamp">
-                        Last Updated: ${new Date(position.timestamp).toLocaleTimeString()}
-                    </div>
-                `;
-            }
-
-            // Send updated bus position to the server
-            async updateBusPositionOnServer(busNumber, position) {
-                try {
-                    const response = await fetch('/updateBusPosition', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            busNumber,
-                            latitude: position.latitude,
-                            longitude: position.longitude,
-                            timestamp: position.timestamp
-                        })
-                    });
-                    if (response.ok) {
-                        console.log(`Bus ${busNumber} position updated on server`);
-                    } else {
-                        console.log(`Failed to update bus ${busNumber} position on server`);
-                    }
-                } catch (error) {
-                    console.error('Error sending bus position to server:', error);
-                }
-            }
-
-            // Create a JSON representation of bus movement data
-            createMovementJSON() {
-                const movementData = [];
-                this.buses.forEach((position, busNumber) => {
-                    movementData.push({
-                        busNumber: busNumber,
-                        latitude: position.latitude,
-                        longitude: position.longitude,
-                        timestamp: position.timestamp
-                    });
-                });
-                return JSON.stringify(movementData, null, 2);
-            }
+        // Function to simulate fetching bus data
+        async function fetchBusPositions() {
+            // Simulate an API response by returning the busPositions object
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(busPositions);
+                }, 1000); // Simulate network delay
+            });
         }
 
-        // Tracker inicializálása és buszok indítása
-        const tracker = new BusTracker();
-
-        // Buszok betöltése
-        async function initializeBuses() {
-            const busNumbers = ['21', '23', '43', '44']; // Add your bus numbers here
-            for (const busNumber of busNumbers) {
-                const success = await tracker.loadRoute(busNumber);
-                if (!success) {
-                    const container = document.getElementById('busContainer');
-                    const error = document.createElement('div');
-                    error.className = 'error';
-                    error.textContent = `Failed to load route for bus ${busNumber}`;
-                    container.appendChild(error);
-                }
+        // Function to update bus positions on the page
+        function updateBusDisplay(busNumber, position) {
+            let busElement = document.getElementById(`bus-${busNumber}`);
+            if (!busElement) {
+                busElement = document.createElement('div');
+                busElement.id = `bus-${busNumber}`;
+                busElement.className = 'bus-info';
+                document.getElementById('busContainer').appendChild(busElement);
             }
+
+            busElement.innerHTML = `
+                <h3>Bus ${busNumber}</h3>
+                <div class="coordinates">
+                    Latitude: ${position.latitude.toFixed(6)}<br>
+                    Longitude: ${position.longitude.toFixed(6)}
+                </div>
+                <div class="timestamp">
+                    Last Updated: ${new Date(position.timestamp).toLocaleTimeString()}
+                </div>
+            `;
         }
 
-        // Function to trigger the download of the bus movement JSON
+        // Function to handle downloading the bus movement data as JSON
         function downloadMovementData() {
-            const jsonData = tracker.createMovementJSON();
+            const jsonData = JSON.stringify(busPositions, null, 2);
             const blob = new Blob([jsonData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -236,11 +164,24 @@
             URL.revokeObjectURL(url);
         }
 
-        // Attach event listener to the download button
+        // Event listener for the download button
         document.getElementById('downloadBtn').addEventListener('click', downloadMovementData);
 
-        // Oldal betöltésekor indítjuk a buszokat
-        window.onload = initializeBuses;
+        // Update bus positions every 5 seconds (simulate)
+        setInterval(async () => {
+            const data = await fetchBusPositions();
+            for (const busNumber in data) {
+                updateBusDisplay(busNumber, data[busNumber]);
+            }
+        }, 5000);
+
+        // Initial load of bus positions
+        (async () => {
+            const data = await fetchBusPositions();
+            for (const busNumber in data) {
+                updateBusDisplay(busNumber, data[busNumber]);
+            }
+        })();
     </script>
 </body>
 
