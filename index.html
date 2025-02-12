@@ -69,6 +69,20 @@
             border-radius: 4px;
             margin: 10px 0;
         }
+
+        .download-button {
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .download-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 
@@ -80,6 +94,8 @@
         <div class="bus-container" id="busContainer">
             <!-- Bus info will be dynamically added here -->
         </div>
+
+        <button class="download-button" id="downloadBtn">Download Bus Movement Data</button>
     </div>
 
     <script>
@@ -135,7 +151,7 @@
                     document.getElementById('busContainer').appendChild(busElement);
                 }
 
-                busElement.innerHTML = `
+                busElement.innerHTML = ` 
                     <h3>Bus ${busNumber}</h3>
                     <div class="coordinates">
                         Latitude: ${position.latitude.toFixed(6)}<br>
@@ -146,6 +162,20 @@
                     </div>
                 `;
             }
+
+            // Create a JSON representation of bus movement data
+            createMovementJSON() {
+                const movementData = [];
+                this.buses.forEach((position, busNumber) => {
+                    movementData.push({
+                        busNumber: busNumber,
+                        latitude: position.latitude,
+                        longitude: position.longitude,
+                        timestamp: position.timestamp
+                    });
+                });
+                return JSON.stringify(movementData, null, 2);
+            }
         }
 
         // Tracker inicializálása és buszok indítása
@@ -153,7 +183,7 @@
 
         // Buszok betöltése
         async function initializeBuses() {
-            const busNumbers = ['21','23','43', '44']; // Add your bus numbers here
+            const busNumbers = ['21', '23', '43', '44']; // Add your bus numbers here
             for (const busNumber of busNumbers) {
                 const success = await tracker.loadRoute(busNumber);
                 if (!success) {
@@ -166,10 +196,20 @@
             }
         }
 
-        // API a busz pozíciók lekéréséhez
-        function getBusPosition(busNumber) {
-            return tracker.buses.get(busNumber);
+        // Function to trigger the download of the bus movement JSON
+        function downloadMovementData() {
+            const jsonData = tracker.createMovementJSON();
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bus_movement_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
         }
+
+        // Attach event listener to the download button
+        document.getElementById('downloadBtn').addEventListener('click', downloadMovementData);
 
         // Oldal betöltésekor indítjuk a buszokat
         window.onload = initializeBuses;
