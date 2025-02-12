@@ -70,7 +70,6 @@
             margin: 10px 0;
         }
     </style>
-    <meta http-equiv="refresh" content="2">
 </head>
 
 <body>
@@ -84,6 +83,7 @@
     </div>
 
     <script>
+        // Busz útvonalak és pozíciók kezelése
         class BusTracker {
             constructor() {
                 this.buses = new Map();
@@ -110,8 +110,6 @@
                     const route = this.routes.get(busNumber);
                     let currentIndex = this.currentIndexes.get(busNumber);
 
-                    if (!route || currentIndex === undefined) return;
-
                     if (currentIndex >= route.length - 1) {
                         currentIndex = 0;
                     }
@@ -119,25 +117,13 @@
                     const position = {
                         latitude: route[currentIndex][0],
                         longitude: route[currentIndex][1],
-                        timestamp: new Date().toISOString(),
-                        speed: this.calculateSpeed(route, currentIndex),
-                        nextStop: this.getNextStop(route, currentIndex)
+                        timestamp: new Date().toISOString()
                     };
 
                     this.buses.set(busNumber, position);
                     this.currentIndexes.set(busNumber, currentIndex + 1);
                     this.updateBusDisplay(busNumber, position);
                 }, 2000);
-            }
-
-            calculateSpeed(route, currentIndex) {
-                // Simulate varying speeds between 40-60 km/h
-                return 40 + Math.random() * 20;
-            }
-
-            getNextStop(route, currentIndex) {
-                // You would implement actual stop logic here
-                return "Next Stop";
             }
 
             updateBusDisplay(busNumber, position) {
@@ -153,9 +139,7 @@
                     <h3>Bus ${busNumber}</h3>
                     <div class="coordinates">
                         Latitude: ${position.latitude.toFixed(6)}<br>
-                        Longitude: ${position.longitude.toFixed(6)}<br>
-                        Speed: ${position.speed.toFixed(1)} km/h<br>
-                        Next Stop: ${position.nextStop}
+                        Longitude: ${position.longitude.toFixed(6)}
                     </div>
                     <div class="timestamp">
                         Last Updated: ${new Date(position.timestamp).toLocaleTimeString()}
@@ -164,10 +148,12 @@
             }
         }
 
+        // Tracker inicializálása és buszok indítása
         const tracker = new BusTracker();
 
+        // Buszok betöltése
         async function initializeBuses() {
-            const busNumbers = ['21', '23', '43', '44'];
+            const busNumbers = ['21','23','43', '44']; // Add your bus numbers here
             for (const busNumber of busNumbers) {
                 const success = await tracker.loadRoute(busNumber);
                 if (!success) {
@@ -180,21 +166,12 @@
             }
         }
 
-        // API endpoint for getting bus positions
-        window.getBusPosition = function(busNumber) {
-            const bus = tracker.buses.get(busNumber);
-            if (!bus) return null;
-            
-            return {
-                latitude: bus.latitude,
-                longitude: bus.longitude,
-                speed: bus.speed,
-                timestamp: bus.timestamp,
-                nextStop: bus.nextStop
-            };
+        // API a busz pozíciók lekéréséhez
+        function getBusPosition(busNumber) {
+            return tracker.buses.get(busNumber);
         }
 
-        // Start tracking when page loads
+        // Oldal betöltésekor indítjuk a buszokat
         window.onload = initializeBuses;
     </script>
 </body>
