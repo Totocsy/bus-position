@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Bus Tracking Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .bus-container {
+            margin-top: 20px;
+        }
+
+        .bus-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .bus-info h3 {
+            margin: 0 0 10px 0;
+            color: #2196F3;
+        }
+
+        .coordinates {
+            font-family: monospace;
+            background: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .error {
+            color: #f44336;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Bus Tracking Server</h1>
+        <div class="status">Server is running</div>
+
+        <div class="bus-container" id="busContainer">
+            <!-- Bus info will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        // Busz útvonalak és pozíciók kezelése
+        class BusTracker {
+            constructor() {
+                this.buses = new Map();
+                this.routes = new Map();
+                this.currentIndexes = new Map();
+            }
+
+            async loadRoute(busNumber) {
+                try {
+                    const response = await fetch(`routes/routes_${busNumber}.json`);
+                    const data = await response.json();
+                    this.routes.set(busNumber, data.busRoute);
+                    this.currentIndexes.set(busNumber, 0);
+                    this.startBusMovement(busNumber);
+                    return true;
+                } catch (error) {
+                    console.error(`Error loading route for bus ${busNumber}:`, error);
+                    return false;
+                }
+            }
+
+            startBusMovement(busNumber) {
+                setInterval(() => {
+                    const route = this.routes.get(busNumber);
+                    let currentIndex = this.currentIndexes.get(busNumber);
+
+                    if (currentIndex >= route.length - 1) {
+                        currentIndex = 0;
+                    }
+
+                    const position = {
+                        latitude: route[currentIndex][0],
+                        longitude: route[currentIndex][1],
+                        timestamp: new Date().toISOString()
+                    };
+
+                    this.buses.set(busNumber, position);
+                    this.currentIndexes.set(busNumber, currentIndex + 1);
+                    this.updateBusDisplay(busNumber, position);
+                }, 2000);
+            }
+
+            updateBusDisplay(busNumber, position) {
+                let busElement = document.getElementById(`bus-${busNumber}`);
+                if (!busElement) {
+                    busElement = document.createElement('div');
+                    busElement.id = `bus-${busNumber}`;
+                    busElement.className = 'bus-info';
+                    document.getElementById('busContainer').appendChild(busElement);
+                }
+
+                busElement.innerHTML = `
+                    <h3>Bus ${busNumber}</h3>
+                    <div class="coordinates">
+                        Latitude: ${position.latitude.toFixed(6)}<br>
+                        Longitude: ${position.longitude.toFixed(6)}
+                    </div>
+                    <div class="timestamp">
+                        Last Updated: ${new Date(position.timestamp).toLocaleTimeString()}
+                    </div>
+                `;
+            }
+        }
+
+        // Tracker inicializálása és buszok indítása
+        const tracker = new BusTracker();
+
+        // Buszok betöltése
+        async function initializeBuses() {
+            const busNumbers = ['43', '44']; // Add your bus numbers here
+            for (const busNumber of busNumbers) {
+                const success = await tracker.loadRoute(busNumber);
+                if (!success) {
+                    const container = document.getElementById('busContainer');
+                    const error = document.createElement('div');
+                    error.className = 'error';
+                    error.textContent = `Failed to load route for bus ${busNumber}`;
+                    container.appendChild(error);
+                }
+            }
+        }
+
+        // API a busz pozíciók lekéréséhez
+        function getBusPosition(busNumber) {
+            return tracker.buses.get(busNumber);
+        }
+
+        // Oldal betöltésekor indítjuk a buszokat
+        window.onload = initializeBuses;
+    </script>
+</body>
+
+</html>
