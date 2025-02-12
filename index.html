@@ -93,7 +93,7 @@
 
             async loadRoute(busNumber) {
                 try {
-                    const response = await fetch(`routes/routes_${busNumber}.json`);
+                    const response = await fetch(`./routes_${busNumber}.json`);
                     const data = await response.json();
                     this.routes.set(busNumber, data.busRoute);
                     this.currentIndexes.set(busNumber, 0);
