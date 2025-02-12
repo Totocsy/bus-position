@@ -101,17 +101,33 @@
     </div>
 
     <script>
-        // Function to simulate fetching bus data for bus number 21
-        async function fetchBusPosition(busNumber) {
-            try {
-                const response = await fetch(`https://totocsy.github.io/bus-position/${busNumber}`);
-                const data = await response.json();
-
-                // Return the bus position for the given busNumber
-                return data;
-            } catch (error) {
-                console.error(`Error fetching bus ${busNumber} position:`, error);
+        // Simulate the server-side bus positions
+        const busPositions = {
+            "21": {
+                latitude: 45.123456,
+                longitude: 25.123456,
+                timestamp: new Date().toISOString()
+            },
+            "23": {
+                latitude: 45.223456,
+                longitude: 25.223456,
+                timestamp: new Date().toISOString()
+            },
+            "43": {
+                latitude: 45.323456,
+                longitude: 25.323456,
+                timestamp: new Date().toISOString()
             }
+        };
+
+        // Function to simulate fetching bus data
+        async function fetchBusPositions() {
+            // Simulate an API response by returning the busPositions object
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(busPositions);
+                }, 1000); // Simulate network delay
+            });
         }
 
         // Function to update bus positions on the page
@@ -138,7 +154,7 @@
 
         // Function to handle downloading the bus movement data as JSON
         function downloadMovementData() {
-            const jsonData = JSON.stringify({ bus21: busPositions }, null, 2);
+            const jsonData = JSON.stringify(busPositions, null, 2);
             const blob = new Blob([jsonData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -151,19 +167,19 @@
         // Event listener for the download button
         document.getElementById('downloadBtn').addEventListener('click', downloadMovementData);
 
-        // Fetch bus position and update every 5 seconds
+        // Update bus positions every 5 seconds (simulate)
         setInterval(async () => {
-            const data = await fetchBusPosition(21); // Fetch bus data for bus number 21
-            if (data) {
-                updateBusDisplay(21, data);
+            const data = await fetchBusPositions();
+            for (const busNumber in data) {
+                updateBusDisplay(busNumber, data[busNumber]);
             }
         }, 5000);
 
-        // Initial load of bus position
+        // Initial load of bus positions
         (async () => {
-            const data = await fetchBusPosition(21); // Fetch bus data for bus number 21
-            if (data) {
-                updateBusDisplay(21, data);
+            const data = await fetchBusPositions();
+            for (const busNumber in data) {
+                updateBusDisplay(busNumber, data[busNumber]);
             }
         })();
     </script>
