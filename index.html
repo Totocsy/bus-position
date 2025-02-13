@@ -24,13 +24,6 @@
             margin-bottom: 20px;
         }
 
-        .status {
-            padding: 15px;
-            background: #e8f5e9;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-
         .bus-container {
             margin-top: 20px;
         }
@@ -42,64 +35,18 @@
             margin: 10px 0;
             border-left: 4px solid #4CAF50;
         }
-
-        .bus-info h3 {
-            margin: 0 0 10px 0;
-            color: #2196F3;
-        }
-
-        .coordinates {
-            font-family: monospace;
-            background: #fff;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-
-        .timestamp {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-
-        .error {
-            color: #f44336;
-            padding: 10px;
-            background: #ffebee;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-
-        .download-button {
-            margin-top: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .download-button:hover {
-            background-color: #45a049;
-        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1>Bus Tracking Server</h1>
-        <div class="status">Server is running</div>
-
         <div class="bus-container" id="busContainer">
             <!-- Bus info will be dynamically added here -->
         </div>
-
-        <button class="download-button" id="downloadBtn">Download Bus Movement Data</button>
     </div>
 
     <script>
-        // Busz útvonalak és pozíciók kezelése
         class BusTracker {
             constructor() {
                 this.buses = new Map();
@@ -114,10 +61,8 @@
                     this.routes.set(busNumber, data.busRoute);
                     this.currentIndexes.set(busNumber, 0);
                     this.startBusMovement(busNumber);
-                    return true;
                 } catch (error) {
                     console.error(`Error loading route for bus ${busNumber}:`, error);
-                    return false;
                 }
             }
 
@@ -139,9 +84,6 @@
                     this.buses.set(busNumber, position);
                     this.currentIndexes.set(busNumber, currentIndex + 1);
                     this.updateBusDisplay(busNumber, position);
-
-                    // Send updated position to the server
-                    this.updateBusPositionOnServer(busNumber, position);
                 }, 2000);
             }
 
@@ -151,73 +93,26 @@
                     busElement = document.createElement('div');
                     busElement.id = `bus-${busNumber}`;
                     busElement.className = 'bus-info';
+                    busElement.setAttribute('data-bus-number', busNumber);
                     document.getElementById('busContainer').appendChild(busElement);
                 }
-
+                
+                busElement.setAttribute('data-latitude', position.latitude);
+                busElement.setAttribute('data-longitude', position.longitude);
+                busElement.setAttribute('data-timestamp', position.timestamp);
+                
                 busElement.innerHTML = `
                     <h3>Bus ${busNumber}</h3>
-                    <div class="coordinates">
-                        Latitude: ${position.latitude.toFixed(6)}<br>
-                        Longitude: ${position.longitude.toFixed(6)}
-                    </div>
-                    <div class="timestamp">
-                        Last Updated: ${new Date(position.timestamp).toLocaleTimeString()}
-                    </div>
+                    <p>Latitude: <span>${position.latitude}</span></p>
+                    <p>Longitude: <span>${position.longitude}</span></p>
+                    <p>Last Updated: <span>${new Date(position.timestamp).toLocaleTimeString()}</span></p>
                 `;
             }
-
-
-            // Create a JSON representation of bus movement data
-            createMovementJSON() {
-                const movementData = [];
-                this.buses.forEach((position, busNumber) => {
-                    movementData.push({
-                        busNumber: busNumber,
-                        latitude: position.latitude,
-                        longitude: position.longitude,
-                        timestamp: position.timestamp
-                    });
-                });
-                return JSON.stringify(movementData, null, 2);
-            }
         }
 
-        // Tracker inicializálása és buszok indítása
         const tracker = new BusTracker();
-
-        // Buszok betöltése
-        async function initializeBuses() {
-            const busNumbers = ['21', '23', '43', '44']; // Add your bus numbers here
-            for (const busNumber of busNumbers) {
-                const success = await tracker.loadRoute(busNumber);
-                if (!success) {
-                    const container = document.getElementById('busContainer');
-                    const error = document.createElement('div');
-                    error.className = 'error';
-                    error.textContent = `Failed to load route for bus ${busNumber}`;
-                    container.appendChild(error);
-                }
-            }
-        }
-
-        // Function to trigger the download of the bus movement JSON
-        function downloadMovementData() {
-            const jsonData = tracker.createMovementJSON();
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bus_movement_data.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // Attach event listener to the download button
-        document.getElementById('downloadBtn').addEventListener('click', downloadMovementData);
-
-        // Oldal betöltésekor indítjuk a buszokat
-        window.onload = initializeBuses;
+        const busNumbers = ['21', '23', '43', '44'];
+        busNumbers.forEach(bus => tracker.loadRoute(bus));
     </script>
 </body>
-
 </html>
